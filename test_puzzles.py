@@ -18,7 +18,7 @@
 # This is a collection of 16 tensor puzzles. Like chess puzzles these are
 # not meant to simulate the complexity of a real program, but to practice
 # in a simplified environment. Each puzzle asks you to reimplement one
-# function in the NumPy standard library without magic. 
+# function in the NumPy standard library without magic.
 
 # ![](https://raw.githubusercontent.com/srush/Tensor-Puzzles/main/chess.jpeg)
 
@@ -86,7 +86,7 @@ def where(q, a, b):
 # [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/srush/Tensor-Puzzles/blob/main/Tensor%20Puzzlers.ipynb)
 
 # If you are runing in a notebook, just uncomment the test for each example.
-# If the test succeeds you will get a puppy. 
+# If the test succeeds you will get a puppy.
 
 # [Start at Puzzle 1!](#puzzle-1---ones).
 
@@ -254,7 +254,7 @@ def ones_spec(out):
 
 # +
 def ones(i: int) -> TT["i"]:
-    assert False, 'Not implemented yet.'
+    return where(arange(i) > -1, 1, 0)
 
 
 test_ones = make_test(ones, ones_spec, add_sizes=["i"])
@@ -275,11 +275,11 @@ def sum_spec(a, out):
 
 # +
 def sum(a: TT["i"]) -> TT[1]:
-    assert False, 'Not implemented yet.'
+    return a @ ones(len(a))
 
 
 test_sum = make_test(sum, sum_spec)
-# run_test(test_sum)
+run_test(test_sum)
 
 
 # + [markdown]
@@ -296,6 +296,7 @@ def outer_spec(a, b, out):
 
 # +
 def outer(a: TT["i"], b: TT["j"]) -> TT["i", "j"]:
+    return a[:, None] * b[None, :]
     assert False, 'Not implemented yet.'
 
 
@@ -316,6 +317,7 @@ def diag_spec(a, out):
 
 # +
 def diag(a: TT["i", "i"]) -> TT["i"]:
+    return a[arange(len(a)),arange(len(a))]
     assert False, 'Not implemented yet.'
 
 
@@ -335,12 +337,13 @@ def eye_spec(out):
 
 # +
 def eye(j: int) -> TT["j", "j"]:
+    return where(outer(arange(j), ones(j)) == outer(ones(j),arange(j)), 1, 0)
     assert False, 'Not implemented yet.'
 
 
 # +
 test_eye = make_test(eye, eye_spec, add_sizes=["j"])
-# run_test(test_eye)
+# # run_test(test_eye)
 
 # + [markdown]
 # ## Puzzle 6 - triu
@@ -359,6 +362,7 @@ def triu_spec(out):
 
 # +
 def triu(j: int) -> TT["j", "j"]:
+    return where(outer(arange(j), ones(j)) <= outer(ones(j),arange(j)), 1, 0)
     assert False, 'Not implemented yet.'
 
 
@@ -380,6 +384,7 @@ def cumsum_spec(a, out):
 
 # +
 def cumsum(a: TT["i"]) -> TT["i"]:
+    return a@triu(a.shape[0])
     assert False, 'Not implemented yet.'
 
 
@@ -401,6 +406,9 @@ def diff_spec(a, out):
 
 # +
 def diff(a: TT["i"], i: int) -> TT["i"]:
+    # a[1:] = a[1:] - a[:-1]
+    # return a
+    return where(arange(i)>0, a-a[arange(len(a))-1], a)
     assert False, 'Not implemented yet.'
 
 
@@ -421,6 +429,7 @@ def vstack_spec(a, b, out):
 
 # +
 def vstack(a: TT["i"], b: TT["i"]) -> TT[2, "i"]:
+    return  where(arange(2)[:, None] * ones(a.shape[0])[None] > 0, b, a)
     assert False, 'Not implemented yet.'
 
 
@@ -443,6 +452,7 @@ def roll_spec(a, out):
 
 # +
 def roll(a: TT["i"], i: int) -> TT["i"]:
+    return a[arange(len(a))- i+1]
     assert False, 'Not implemented yet.'
 
 
@@ -462,6 +472,7 @@ def flip_spec(a, out):
 
 # +
 def flip(a: TT["i"], i: int) -> TT["i"]:
+    return a[-arange(i)-1]
     assert False, 'Not implemented yet.'
 
 
@@ -485,6 +496,10 @@ def compress_spec(g, v, out):
 
 # +
 def compress(g: TT["i", bool], v: TT["i"], i:int) -> TT["i"]:
+    # ret = 0 * ones(len(g))
+    # ret[:sum(where(g, 1, 0))] = v[g]
+    # return ret
+    return (ones(sum(ones(i)[g]))[None]@((v[g][:, None] * ones(i))* eye(i)[:sum(ones(i)[g])]))[0]
     assert False, 'Not implemented yet.'
 
 
@@ -506,6 +521,7 @@ def pad_to_spec(a, out):
 
 
 def pad_to(a: TT["i"], i: int, j: int) -> TT["j"]:
+    return (ones(i)[None]@((a[:, None] * ones(j))*(eye(max(i,j))[:i, :j])))[0]
     assert False, 'Not implemented yet.'
 
 
@@ -531,6 +547,7 @@ def sequence_mask_spec(values, length, out):
 
 # +
 def sequence_mask(values: TT["i", "j"], length: TT["i", int]) -> TT["i", "j"]:
+    return where(ones(len(values))[:, None] * arange(values.shape[1]) - length[:, None] <0, values, 0)
     assert False, 'Not implemented yet.'
 
 
@@ -560,6 +577,7 @@ def bincount_spec(a, out):
 
 # +
 def bincount(a: TT["i"], j: int) -> TT["j"]:
+    return (ones(len(a))[None]@eye(j)[a])[0]
     assert False, 'Not implemented yet.'
 
 
@@ -588,6 +606,7 @@ def scatter_add_spec(values, link, out):
 
 # +
 def scatter_add(values: TT["i"], link: TT["i"], j: int) -> TT["j"]:
+    return  where(link == arange(j)[..., None], values[None], 0) @ ones(len(values))
     assert False, 'Not implemented yet.'
 
 
